@@ -195,7 +195,7 @@ docker compose up -d
 make smoke
 ```
 
-Go 1.23.8 or newer is required.
+Go 1.24.2 or newer is required.
 
 ## Current scope
 
