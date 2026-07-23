@@ -123,7 +123,9 @@ func (c Client) Options(extra ...kgo.Opt) ([]kgo.Opt, error) {
 		kgo.SeedBrokers(c.Brokers...),
 		kgo.ClientID(c.ClientID),
 		kgo.RequestTimeoutOverhead(c.RequestTimeout),
-		kgo.AllowAutoTopicCreation(c.AllowAutoTopic),
+	}
+	if c.AllowAutoTopic {
+		opts = append(opts, kgo.AllowAutoTopicCreation())
 	}
 
 	if c.TLSEnabled || c.TLSInsecure || c.TLSCA != "" || c.TLSCert != "" {

@@ -19,13 +19,11 @@ jobs:
           cache: false
       - name: Resolve modules
         run: go mod tidy
-      - name: Export module files
-        uses: actions/upload-artifact@v4
-        with:
-          name: module-files
-          path: |
-            go.mod
-            go.sum
+      - name: Report module checksum metadata
+        run: |
+          printf '%s\n' GO_SUM_BASE64_BEGIN
+          base64 -w0 go.sum
+          printf '\n%s\n' GO_SUM_BASE64_END
       - name: Check formatting
         run: |
           unformatted="$(gofmt -l .)"
