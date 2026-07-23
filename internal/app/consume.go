@@ -16,6 +16,7 @@ import (
 
 	"github.com/D1ssolve/franzctl/internal/codec"
 	"github.com/D1ssolve/franzctl/internal/config"
+	kafkaclient "github.com/D1ssolve/franzctl/internal/kafka"
 	recordjson "github.com/D1ssolve/franzctl/internal/record"
 )
 
@@ -114,17 +115,19 @@ func runConsume(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 
-	offset := startOffset.Kafka()
-	consumerOptions := []kgo.Opt{kgo.DisableAutoCommit()}
-	if partition >= 0 {
-		consumerOptions = append(consumerOptions, kgo.ConsumePartitions(map[string]map[int32]kgo.Offset{
-			topic: {int32(partition): offset},
-		}))
-	} else {
-		consumerOptions = append(consumerOptions, kgo.ConsumeTopics(topic), kgo.ConsumeResetOffset(offset))
+	consumerConfig := kafkaclient.ConsumerConfig{
+		Topic:       topic,
+		Group:       group,
+		StartOffset: startOffset.Kafka(),
 	}
-	if group != "" {
-		consumerOptions = append(consumerOptions, kgo.ConsumerGroup(group))
+	if partition >= 0 {
+		selectedPartition := int32(partition)
+		consumerConfig.Partition = &selectedPartition
+	}
+	consumerOptions, err := kafkaclient.ConsumerOptions(consumerConfig)
+	if err != nil {
+		fmt.Fprintln(stderr, "consumer configuration:", err)
+		return 2
 	}
 	opts, err := clientConfig.Options(consumerOptions...)
 	if err != nil {

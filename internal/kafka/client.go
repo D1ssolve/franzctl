@@ -70,19 +70,23 @@ func (c *Client) ReadRecords(ctx context.Context, topic string, limit int) ([]do
 	if limit <= 0 {
 		limit = 100
 	}
-	client, err := c.newClient(
-		kgo.ConsumeTopics(topic),
-		kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
-		kgo.DisableAutoCommit(),
-	)
+	consumerOptions, err := ConsumerOptions(ConsumerConfig{
+		Topic:       topic,
+		StartOffset: kgo.NewOffset().AtStart(),
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("configure record snapshot: %w", err)
+	}
+	client, err := c.newClient(consumerOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("create record snapshot consumer: %w", err)
 	}
 	defer client.Close()
 
 	fetches := client.PollRecords(ctx, limit)
 	if errs := fetches.Errors(); len(errs) > 0 {
-		return nil, errs[0].Err
+		first := errs[0]
+		return nil, fmt.Errorf("consume %s[%d]: %w", first.Topic, first.Partition, first.Err)
 	}
 
 	records := make([]domain.Record, 0, len(fetches.Records()))
