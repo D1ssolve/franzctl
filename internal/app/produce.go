@@ -35,7 +35,11 @@ type producedRecord struct {
 func runProduce(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("produce", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	var clientConfig config.Client
+	clientConfig, err := config.LoadForArgs(args)
+	if err != nil {
+		fmt.Fprintln(stderr, "configuration:", err)
+		return 2
+	}
 	clientConfig.Bind(fs)
 
 	var topic, keyCodecSpec, valueCodecSpec, inputMode string
