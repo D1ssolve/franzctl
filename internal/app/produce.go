@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/twmb/franz-go/pkg/kgo"
+
 	"github.com/D1ssolve/franzctl/internal/codec"
 	"github.com/D1ssolve/franzctl/internal/config"
 )
