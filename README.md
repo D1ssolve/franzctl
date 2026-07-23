@@ -38,6 +38,9 @@ remains available for shell scripts and CI.
 - composable codec pipelines: `json,gzip`, `base64`, `hex`, numeric types
 - custom codecs through direct executable invocation, without a shell
 - TLS, mTLS, SASL/PLAIN, and SASL/SCRAM
+- first-run connection setup and a reusable history of Kafka clusters
+- encrypted credential storage through macOS Keychain, Linux Secret Service,
+  or Windows DPAPI
 - static Go binaries and GoReleaser packaging for macOS, Linux, and Windows
 - Homebrew Cask publishing through `D1ssolve/homebrew-tap`
 
@@ -70,9 +73,13 @@ Start the included Kafka-compatible Redpanda broker:
 
 ```bash
 docker compose up -d
-export FRANZCTL_BROKERS=localhost:9092
 franzctl
 ```
+
+On the first launch, the connection wizard asks for a profile name, bootstrap
+brokers, TLS, and optional SASL credentials. Future launches start with the
+saved connection picker. Credentials are masked while typing and are never
+written to the profile file.
 
 TUI keys:
 
@@ -122,6 +129,32 @@ franzctl consume \
   --value-codec json
 ```
 
+Saved connections work with every command:
+
+```bash
+# Local broker without authentication
+franzctl connection add \
+  --name local \
+  --broker localhost:9092
+
+# Managed or third-party broker
+printf '%s' "$KAFKA_PASSWORD" | franzctl connection add \
+  --name production \
+  --broker broker-1.example.com:9093 \
+  --broker broker-2.example.com:9093 \
+  --tls \
+  --sasl-mechanism scram-sha-512 \
+  --username alice \
+  --password-stdin
+
+franzctl connection list
+franzctl connection use production
+franzctl consume --topic events --from beginning
+
+# Select a profile for one command without changing the active profile.
+franzctl consume --connection local --topic events
+```
+
 ## Codec pipelines
 
 A pipeline runs left-to-right when producing and in reverse when consuming:
@@ -142,22 +175,51 @@ from stdin, writes bytes to stdout, and receives `FRANZCTL_CODEC_MODE=encode`
 or `FRANZCTL_CODEC_MODE=decode`. Processes are launched directly; codec specs
 are never interpreted by a shell.
 
-## Connection configuration
+## Connection profiles and credentials
 
-The TUI reads connection settings from environment variables:
+Connection profiles contain broker addresses, TLS settings, SASL mechanism,
+and usage timestamps. They are stored in the operating system's user
+configuration directory under `franzctl/connections.json` with owner-only
+permissions. The file never contains usernames or passwords.
+
+Credentials are stored separately:
+
+| Platform | Protected storage |
+|---|---|
+| macOS | Login Keychain |
+| Linux | Secret Service via `secret-tool` (`libsecret-tools`) |
+| Windows | DPAPI encrypted for the current Windows user |
+
+There is deliberately no plaintext fallback. On Linux, install
+`libsecret-tools` before saving an authenticated profile. Profiles without
+SASL credentials do not require a credential-store service.
+
+Useful commands:
+
+```text
+franzctl connection add --help
+franzctl connection list [--json]
+franzctl connection show <name>
+franzctl connection use <name>
+franzctl connection remove <name>
+```
+
+Environment variables remain available for ephemeral use and override the
+selected profile:
 
 | Variable | Purpose |
 |---|---|
 | `FRANZCTL_BROKERS` | comma-separated bootstrap brokers; defaults to `localhost:9092` |
+| `FRANZCTL_CONNECTION` | saved profile to use |
 | `FRANZCTL_CLIENT_ID` | Kafka client ID |
 | `FRANZCTL_TLS` | enable TLS |
 | `FRANZCTL_SASL_MECHANISM` | `plain`, `scram-sha-256`, or `scram-sha-512` |
 | `FRANZCTL_SASL_USERNAME` | SASL username |
 | `FRANZCTL_SASL_PASSWORD` | SASL password |
 
-CLI commands accept the same connection settings as flags. Prefer the password
-environment variable because command arguments may be visible to other local
-processes.
+CLI commands accept the same settings as flags. Use `--password-stdin` when
+saving a profile; a password flag is intentionally not provided because
+command arguments may be visible to other local processes.
 
 ## Architecture
 
@@ -171,6 +233,7 @@ Kafka:
 - `internal/tui` — Bubble Tea model, commands, dialogs, and layout
 - `internal/tui/panels` — focused panel components and panel messages
 - `internal/config` — Kafka, TLS, and SASL connection configuration
+  plus profile history and platform credential stores
 - `internal/codec` — built-in and executable codec pipelines
 - `internal/record` — safe JSON representation for text and binary payloads
 
