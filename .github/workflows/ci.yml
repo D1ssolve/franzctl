@@ -18,12 +18,9 @@ jobs:
           go-version: "1.24.2"
           cache: false
       - name: Resolve modules
-        run: go mod tidy
-      - name: Report module checksum metadata
         run: |
-          printf '%s\n' GO_SUM_BASE64_BEGIN
-          base64 -w0 go.sum
-          printf '\n%s\n' GO_SUM_BASE64_END
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
       - name: Check formatting
         run: |
           unformatted="$(gofmt -l .)"
