@@ -12,6 +12,7 @@ Usage:
   franzctl topic create [flags]    create a topic
   franzctl consume [flags]         stream records
   franzctl produce [flags]         publish records
+  franzctl connection <command>    manage saved broker connections
   franzctl codecs                  list codec stages
   franzctl version                 print build information
 
@@ -43,6 +44,8 @@ func (a *App) Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 		return 0
 	case "codecs":
 		return runCodecs(args[1:], stdout, stderr)
+	case "connection", "connections":
+		return runConnection(args[1:], stdin, stdout, stderr)
 	case "topic":
 		if len(args) < 2 || args[1] != "create" {
 			fmt.Fprintln(stderr, `usage: franzctl topic create [flags]`)

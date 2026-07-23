@@ -29,6 +29,7 @@ func (s *Strings) Set(value string) error {
 }
 
 type Client struct {
+	Connection     string
 	Brokers        Strings
 	ClientID       string
 	RequestTimeout time.Duration
@@ -79,6 +80,7 @@ func (c *Client) Bind(fs *flag.FlagSet) {
 	if c.SASLPassword == "" {
 		c.SASLPassword = defaults.SASLPassword
 	}
+	fs.StringVar(&c.Connection, "connection", c.Connection, "saved connection profile")
 	fs.Var(&c.Brokers, "broker", "Kafka bootstrap broker; repeat or use a comma-separated list")
 	fs.StringVar(&c.ClientID, "client-id", c.ClientID, "Kafka client ID")
 	fs.DurationVar(&c.RequestTimeout, "request-timeout", c.RequestTimeout, "Kafka request timeout")

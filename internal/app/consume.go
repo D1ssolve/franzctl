@@ -37,7 +37,11 @@ type consumedRecord struct {
 func runConsume(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("consume", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	var clientConfig config.Client
+	clientConfig, err := config.LoadForArgs(args)
+	if err != nil {
+		fmt.Fprintln(stderr, "configuration:", err)
+		return 2
+	}
 	clientConfig.Bind(fs)
 
 	var topic, group, start, keyCodecSpec, valueCodecSpec, outputFormat string

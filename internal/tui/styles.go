@@ -10,6 +10,7 @@ type Styles struct {
 	Modal  lipgloss.Style
 	Muted  lipgloss.Style
 	Error  lipgloss.Style
+	Active lipgloss.Style
 }
 
 func NewStyles() Styles {
@@ -20,7 +21,8 @@ func NewStyles() Styles {
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorPrimary).
 			Padding(1, 2),
-		Muted: lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280")),
-		Error: lipgloss.NewStyle().Foreground(lipgloss.Color("#F87171")),
+		Muted:  lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280")),
+		Error:  lipgloss.NewStyle().Foreground(lipgloss.Color("#F87171")),
+		Active: lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary),
 	}
 }
