@@ -12,6 +12,7 @@ import (
 	"github.com/twmb/franz-go/pkg/kerr"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/kmsg"
+
 	"github.com/D1ssolve/franzctl/internal/config"
 )
 

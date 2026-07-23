@@ -39,15 +39,15 @@ func New(manager kafka.Manager, brokers []string, version string) (Model, error)
 		return Model{}, fmt.Errorf("tui.New: manager must not be nil")
 	}
 	model := Model{
-		manager: manager,
-		brokers: append([]string(nil), brokers...),
-		version: version,
-		focus:   FocusTopics,
-		topics:  panels.NewTopicsPanel(30, 20),
-		records: panels.NewRecordsPanel(50, 20),
+		manager:   manager,
+		brokers:   append([]string(nil), brokers...),
+		version:   version,
+		focus:     FocusTopics,
+		topics:    panels.NewTopicsPanel(30, 20),
+		records:   panels.NewRecordsPanel(50, 20),
 		inspector: panels.NewInspectorPanel(30, 20),
-		output: panels.NewOutputPanel(110, 8),
-		styles: NewStyles(),
+		output:    panels.NewOutputPanel(110, 8),
+		styles:    NewStyles(),
 	}
 	model.setFocus(FocusTopics)
 	return model, nil
